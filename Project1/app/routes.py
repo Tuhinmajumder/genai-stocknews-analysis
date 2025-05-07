@@ -3,6 +3,7 @@ from openai import AzureOpenAI
 import os, redis, json
 from .cards import dete_card_type
 from .prompt_builder import build_prompt
+from .validator import validate_reply
 
 bp = Blueprint("api",__name__)
 #rdb = redis.from_url(os.getenv("REDIS_URL","redis://localhost:6379"))
@@ -18,6 +19,11 @@ def chat():
     response = client.chat.completions.create(messages=prompt,
                                               model="telcogpt", temperature=0.2)
     assistant_res = response.choices[0].message.content
+    if not validate_reply(assistant_res):            # auto‑retry once
+        prompt.append({"role":"assistant",
+                       "content":"Format error. Re‑answer in layout."})
+        assistant_res = client.chat.completions.create(model="telcogpt", messages=prompt
+                 ).choices[0].message.content
     #rdb.rpush("chat",msg,assistant_res)
     return jsonify({"answer":assistant_res})
 
