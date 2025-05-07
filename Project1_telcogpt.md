@@ -151,6 +151,59 @@ curl -s http://127.0.0.1:5000/chat \
 Expected JSON response contains five numbered bullets under the *Troubleshooting* card layout.
 
 
+## Containerization
+
+```bash
+pip install pipreqs
+pipreqs . --force --ignore .env,venv,gen-ai --skip .git --print
 ---
+
+```
+# same RG, ACR, IMG variables as above
+RG=Tredence-Batch1
+ACR=telcogptacr
+IMG=telcogpt:v1
+KV=telcogpt-kv
+AI=telcogpt-ai
+ACI=telcogpt-aci
+LOCATION=eastus
+
+# 0 infra
+az group create -g $RG -l $LOCATION
+az acr create -g $RG -n $ACR --sku Basic --admin-enabled true
+az keyvault create -g $RG -n $KV -l $LOCATION
+az monitor app-insights component create -g $RG -n $AI --location $LOCATION --application-type web
+
+# 1 secrets
+az keyvault secret set --vault-name $KV -n AOAI_KEY        --value "<primary-key>"
+az keyvault secret set --vault-name $KV -n APPINSIGHTS_KEY --value $(az monitor app-insights component show -g $RG -n $AI --query instrumentationKey -o tsv)
+
+# 2 build + push
+az acr build -t $IMG -r $ACR .
+
+# 3 create a user‑assigned managed identity for ACI
+MI_NAME=telcogpt-mi
+az identity create -g $RG -n $MI_NAME
+MI_ID=$(az identity show -g $RG -n $MI_NAME --query id -o tsv)
+MI_PRINCIPAL=$(az identity show -g $RG -n $MI_NAME --query principalId -o tsv)
+
+# 4 give MI access to Key Vault
+az keyvault set-policy -n $KV --object-id $MI_PRINCIPAL --secret-permissions get list
+
+# 5 run container with the MI & env vars
+az container create -g $RG -n $ACI \
+  --image $ACR.azurecr.io/$IMG \
+  --assign-identity $MI_ID \
+  --registry-login-server $ACR.azurecr.io \
+  --registry-username $(az acr credential show -n $ACR --query username -o tsv) \
+  --registry-password $(az acr credential show -n $ACR --query passwords[0].value -o tsv) \
+  --cpu 1 --memory 1 --ports 80 \
+  --environment-variables \
+      AOAI_ENDPOINT=https://<openai-resource>.openai.azure.com/ \
+      KEYVAULT_URI=https://$KV.vault.azure.net/ \
+      OPENAI_DEPLOYMENT=telcogpt
+
+
+```
 
 © 2025 Blue Data Consulting – All rights reserved.
