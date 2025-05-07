@@ -169,7 +169,6 @@ ACI=telcogpt-aci
 LOCATION=eastus
 
 # 0 infra
-az group create -g $RG -l $LOCATION
 az acr create -g $RG -n $ACR --sku Basic --admin-enabled true
 az keyvault create -g $RG -n $KV -l $LOCATION
 az monitor app-insights component create -g $RG -n $AI --location $LOCATION --application-type web
