@@ -158,8 +158,8 @@ pip install pipreqs
 pipreqs . --force --ignore .env,venv,gen-ai --skip .git --print
 ---
 
-```
-# same RG, ACR, IMG variables as above
+```bash
+
 RG=Tredence-Batch1
 ACR=telcogptacr
 IMG=telcogpt:v1
