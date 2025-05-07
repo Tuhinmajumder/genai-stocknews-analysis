@@ -175,7 +175,7 @@ az keyvault create -g $RG -n $KV -l $LOCATION
 az monitor app-insights component create -g $RG -n $AI --location $LOCATION --application-type web
 
 # 1 secrets
-az keyvault secret set --vault-name $KV -n AOAI_KEY        --value "<primary-key>"
+az keyvault secret set --vault-name $KV -n AZURE_OPENAI_API_KEY        --value "<primary-key>"
 az keyvault secret set --vault-name $KV -n APPINSIGHTS_KEY --value $(az monitor app-insights component show -g $RG -n $AI --query instrumentationKey -o tsv)
 
 # 2 build + push
@@ -199,7 +199,7 @@ az container create -g $RG -n $ACI \
   --registry-password $(az acr credential show -n $ACR --query passwords[0].value -o tsv) \
   --cpu 1 --memory 1 --ports 80 \
   --environment-variables \
-      AOAI_ENDPOINT=https://<openai-resource>.openai.azure.com/ \
+      AZURE_OPENAI_ENDPOINT=https://<openai-resource>.openai.azure.com/ \
       KEYVAULT_URI=https://$KV.vault.azure.net/ \
       OPENAI_DEPLOYMENT=telcogpt
 
