@@ -20,3 +20,8 @@ def chat():
     assistant_res = response.choices[0].message.content
     #rdb.rpush("chat",msg,assistant_res)
     return jsonify({"answer":assistant_res})
+
+
+from flask import render_template
+@bp.route("/")
+def home(): return render_template("chat.html")
