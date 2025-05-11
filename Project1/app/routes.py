@@ -4,10 +4,6 @@ import os, redis, json, logging, time
 from .cards import dete_card_type
 from .prompt_builder import build_prompt
 from .validator import validate_reply
-<<<<<<< HEAD
-
-=======
->>>>>>> 8cf0c21 (updated codebase)
 bp = Blueprint("api",__name__)
 #rdb = redis.from_url(os.getenv("REDIS_URL","redis://localhost:6379"))
 
@@ -33,18 +29,6 @@ def chat():
     hist = []  #rdb.lrange("chat",0,-1)
     card = dete_card_type(msg.lower().strip())
     prompt = build_prompt(card, hist, msg)
-<<<<<<< HEAD
-    response = client.chat.completions.create(messages=prompt,
-                                              model="telcogpt", temperature=0.2)
-    assistant_res = response.choices[0].message.content
-    if not validate_reply(assistant_res):            # auto‑retry once
-        prompt.append({"role":"assistant",
-                       "content":"Format error. Re‑answer in layout."})
-        assistant_res = client.chat.completions.create(model="telcogpt", messages=prompt
-                 ).choices[0].message.content
-    #rdb.rpush("chat",msg,assistant_res)
-    return jsonify({"answer":assistant_res})
-=======
 
     try:
         response = client.chat.completions.create(messages=prompt,
@@ -61,7 +45,6 @@ def chat():
     except (RateLimitError, APIError) as err:
         logger.error("OpenAI Call failed %s",err)
         return jsonify({"error":"upstream failure"}),502
->>>>>>> 8cf0c21 (updated codebase)
 
 
 @bp.route("/")
