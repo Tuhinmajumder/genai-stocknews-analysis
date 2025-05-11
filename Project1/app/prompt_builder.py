@@ -1,7 +1,6 @@
-
 from pathlib import Path
 
-systemprompt_file = "prompts/system_prompt.txt"
+systemprompt_file = "prompts/static_prompt.txt"
 _SYSTEM_PROMPT = Path(systemprompt_file).read_text(encoding='utf-8')
 
 def build_prompt(card:str, history:list[str], user:str)->list[dict]:

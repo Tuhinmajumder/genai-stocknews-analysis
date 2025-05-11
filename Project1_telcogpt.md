@@ -190,3 +190,46 @@ az container create -g $RG -n $ACI \
 ```
 
 © 2025 Blue Data Consulting – All rights reserved.
+
+
+RG=Tredence-Batch1
+ACR=telcogptacr  # check if required change this as well
+IMG=telcogpt:v1
+KV=telcogpt-kv
+AI=telcogpt-ai
+ACI=telcogpt-aci  # change this
+LOCATION=eastus
+
+# 0 infra
+az acr create -g $RG -n $ACR --sku Basic --admin-enabled true
+
+# 2 build + push:  build the docker image and push it to the container registry
+sudo az acr login -n $ACR -u $(az acr credential show -n $ACR --query username -o tsv) \
+  -p $(az acr credential show -n $ACR --query passwords[0].value -o tsv)
+
+sudo docker tag telcogpt:v4 $ACR.azurecr.io/telcogpt:v1
+sudo docker push $ACR.azurecr.io/telcogpt:v1
+az acr repository list -n $ACR -o table
+# az acr build -t $IMG -r $ACR .
+
+# 5 run container with the MI & env vars
+az container create -g $RG -n $ACI \
+  --image $ACR.azurecr.io/$IMG \
+  --registry-login-server $ACR.azurecr.io \
+  --registry-username $(az acr credential show -n $ACR --query username -o tsv) \
+  --registry-password $(az acr credential show -n $ACR --query passwords[0].value -o tsv) \
+  --cpu 1 --memory 1 --ports 8080 --os-type Linux --ip-address public \
+  --dns-name-label telcogpt\
+  --environment-variables \
+      AZURE_OPENAI_ENDPOINT=https://swedencentral.api.cognitive.microsoft.com/ \
+      AZURE_OPENAI_API_KEY=b249ff7055e349c19b9665ff4df191ec
+
+
+az container list -g $RG -o table
+
+az container show -g $RG -n $ACI --query "ipAddress.{fqdn:fqdn,ip:ip,ports:ports}" -o table
+
+az container delete -g $RG -n $ACI --yes
+
+
+--------------- above worked.------------------------
