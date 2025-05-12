@@ -164,13 +164,13 @@ pipreqs . --force --ignore .env,venv,gen-ai --skip .git --print
 # ------------------------------------------------------------------
 RG=Tredence-Batch1                  # resource‑group name
 LOCATION=centralindia               # Azure region
-ACR=telcogptacr                     # must be globally unique
+ACR=telcogptacranshu              # must be globally unique
 IMG=telcogpt:v1                   # repository name inside ACR
 ACI=telcogpt-aci                    # container‑group name
 PORT=8080                             # gunicorn listens here
 
-AOAI_ENDPOINT="https://<openai-resource>.openai.azure.com/"
-AOAI_KEY="<primary-openai-key>"
+AOAI_ENDPOINT=https://swedencentral.api.cognitive.microsoft.com/
+AOAI_KEY=b249ff7055e349c19b9665ff4df191ec
 
 
 # ------------------------------------------------------------------
@@ -183,7 +183,7 @@ AOAI_KEY="<primary-openai-key>"
 az acr create -g $RG -n $ACR --sku Basic --admin-enabled true
 
 # 1. test the app with gunicorn locally (optional)
-gunicorn --b 127.0.0.1:8080 app:"create_app()" -e AZURE_OPENAI_ENDPOINT=AZURE_OPENAI_ENDPOINT -e AZURE_OPENAI_API_KEY=AZURE_OPENAI_API_KEY
+gunicorn -b 127.0.0.1:8080 app:"create_app()" -e AZURE_OPENAI_ENDPOINT=$AOAI_ENDPOINT -e AZURE_OPENAI_API_KEY=$AOAI_KEY
 
 # ------------------------------------------------------------------
 
@@ -198,7 +198,7 @@ sudo docker build -t $IMG .
 # check the list of images
 sudo docker images -a
 # run the image locally
-sudo docker run -d -p 8080:8080 --name -e AZURE_OPENAI_API_KEY=$AOAI_KEY -e AZURE_OPENAI_ENDPOINT=AOAI_ENDPOINT $IMG
+sudo docker run -d -p 8080:8080 -e AZURE_OPENAI_API_KEY=$AOAI_KEY -e AZURE_OPENAI_ENDPOINT=$AOAI_ENDPOINT $IMG
 
 # check the list of running containers
 sudo docker ps -a
@@ -247,7 +247,7 @@ az container create -g $RG -n $ACI \
   --dns-name-label telcogpt-demo \
   --environment-variables \
       AZURE_OPENAI_ENDPOINT=$AOAI_ENDPOINT \
-      AZURE_OPENAI_API_KEY=$AOAI_KEY
+      AZURE_OPENAI_API_KEY=$AOAI_KEY \
 
 # Key switches:
 #   --ip-address public      → allocate public IP
